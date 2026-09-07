@@ -78,7 +78,7 @@ def test_keyboard_teleop_runs_one_visible_non_recording_stage(
         calls.append(command)
         return _FakeProcess(
             0,
-            '[teleop] complete: {"mode": "manual_joint_jog", "status": "PASS"}\n',
+            '[teleop] complete: {"mode": "manual_end_effector_ik", "status": "PASS"}\n',
         )
 
     monkeypatch.setattr(wrapper.subprocess, "Popen", fake_popen)

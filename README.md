@@ -9,7 +9,7 @@ the public `Isaac-Stack-RgyBlock-G129-Dex1-Joint` scene.
 | Task 2 | Instruction-conditioned selection among red, yellow, and green blocks | **PASS** for the recorded green/right prompt; red and yellow are plan-gated |
 | Task 3 | Multi-object interaction: stack the red block on the yellow block | **PASS** |
 | Task 4 | Tool use: grasp a shovel, scoop the red block, and unload it into a tray | **PARTIAL**; no successful scoop yet |
-| Teleoperation | Visible, limit-clamped keyboard control of both arms and Dex1 grippers | **PASS** as an interactive demo; no autonomous success claim |
+| Teleoperation | Collision-gated Cartesian keyboard control of either wrist and Dex1 gripper | **IMPLEMENTED**; visible physical revalidation pending |
 | Cosmos | First-frame policy inference, G1 action adaptation, safety preflight, and three-view replay | **PIPELINE PASS / TASK FAIL** on the recorded stack prompt |
 
 > [!IMPORTANT]
@@ -35,14 +35,14 @@ The project brief encouraged completing as much as possible of the following:
 
 Tasks 1–3 fulfill the requested increasing-difficulty task sequence. Task 4 is
 an additional experimental tool-use extension. The model-free baseline,
-keyboard teleoperation, native LeRobot data pipeline, and Cosmos integration
+end-effector keyboard teleoperation, native LeRobot data pipeline, and Cosmos integration
 address goals 2–4.
 
 | Brief item | Progress and result |
 | --- | --- |
 | Increasing task difficulty | Tasks 1–3 progress from one-object placement to instruction-conditioned selection and two-object stacking; all have a physically recorded PASS. |
 | Setup variation | Task 1 includes a base run and one accepted reset variant; a second variant was rejected after a physical stability failure. Task 2 includes three instruction/object plans, with the green case physically recorded. Task 3 retains successful and rejected calibration evidence. |
-| Model-free control | A reset-time open-loop IK expert completes all planning before rollout. Keyboard teleoperation provides a second, manual model-free path. |
+| Model-free control | A reset-time open-loop IK expert completes all planning before rollout. Cartesian wrist teleoperation provides a second, manual model-free path. |
 | VLA data collection | Successful runs are stored as native LeRobot v3 episodes with language, synchronized RGB, robot state, action, object/target pose, and phase labels. |
 | Existing-policy integration | Cosmos produced a full action chunk that was adapted, preflighted, replayed on G1, recorded, and evaluated. The pipeline succeeded, but that policy rollout did not complete the stack. |
 
@@ -263,31 +263,37 @@ a successful scoop.
 the limiting failure. Doubling the left-finger drive gains did not fix it,
 which points to grasp/contact geometry rather than configured gain alone.
 
-## 6. Teleoperation demo result
+## 6. End-effector teleoperation demo result
 
 **Text prompt:** not applicable. This is direct manual keyboard control, not a
 language-conditioned autonomous task.
 
-**Result: PASS as an interactive demo.** The operator can switch arms, select
-any of seven arm joints, jog the target in either direction, and open or close
-the selected Dex1 gripper. Every command is clamped to live simulator soft
-limits, while unselected joints hold their captured reset positions.
-Teleoperation is isolated from the autonomous path: it does not construct
-`OpenLoopPolicy`, evaluate task success, or create a LeRobot episode.
+**Result: IMPLEMENTED; visible physical revalidation pending.** The operator
+can switch arms and translate the selected wrist in the robot-base frame:
+forward/backward X, left/right Y, and up/down Z. Each key press requests a
+1 cm move while holding the reset wrist orientation. A 15 cm reset-relative
+workspace bound, live simulator joint limits, and collision-aware Pinocchio IK
+gate every request; rejected IK targets never reach the simulator action. The
+operator can also open or close the selected Dex1 gripper. Teleoperation is
+isolated from the autonomous path: it does not construct `OpenLoopPolicy`,
+evaluate task success, or create a LeRobot episode.
 
-**Data collected:** a timestamped `teleop.log` containing mode and clean-exit
-evidence. No autonomous trajectory, success label, or training episode is
-created, because manual teleoperation is currently a control-verification demo
-rather than a recording mode.
+**Data collected:** a timestamped `teleop.log` containing the
+`manual_end_effector_ik` mode, robot-base coordinate convention, fixed
+orientation policy, accepted/rejected IK counts, and clean-exit evidence. No
+autonomous trajectory, success label, or training episode is created, because
+manual teleoperation is a control-verification demo rather than a recording
+mode.
 
 There is no dedicated prerecorded teleoperation RGB video in the current local
 artifact set. A run is verifiable from the visible viewport and
 `teleop.log`; a future head/wrist capture can be published separately without
 adding large media files to Git.
 
-**Problem encountered:** the simulator viewport must have keyboard focus.
-Teleoperation intentionally remains transparent joint-space jogging rather
-than online Cartesian IK.
+**Problem encountered:** the simulator viewport must have keyboard focus, and
+Cartesian requests can be rejected at workspace, joint-limit, IK, or collision
+gates. Wrist orientation intentionally remains fixed at its reset value; this
+demo controls end-effector translation and gripper state, not full 6-DoF pose.
 
 ## 7. Cosmos inference result
 
@@ -365,7 +371,7 @@ Task 4 rollout remains experimental. A passing plan is not a physical Task 4
 PASS; only a complete recording that satisfies the scoop-and-tray evaluator
 can establish success.
 
-### Keyboard teleoperation
+### End-effector keyboard teleoperation
 
 ```bash
 python3 scripts/run_demo.py --keyboard-teleop
@@ -376,8 +382,9 @@ Click the Isaac Sim viewport once to give it keyboard focus:
 | Key | Action |
 | --- | --- |
 | `Tab` | Switch between the right and left arm |
-| `1`–`7` | Select shoulder pitch through wrist yaw |
-| `Left` / `Right` | Decrease / increase the selected target by 2 degrees |
+| `W` / `S` | Move the selected wrist +X / -X (forward / backward) by 1 cm |
+| `A` / `D` | Move the selected wrist +Y / -Y (left / right) by 1 cm |
+| `R` / `F` | Move the selected wrist +Z / -Z (up / down) by 1 cm |
 | `O` / `C` | Open / close the selected arm's Dex1 gripper |
 | `Q` or `Esc` | Exit cleanly |
 

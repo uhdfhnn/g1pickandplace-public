@@ -6,7 +6,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from g1pickplace.keyboard_teleop import JointJogTeleop
+from g1pickplace.geometry import Pose
+from g1pickplace.keyboard_teleop import EndEffectorTeleop
 
 
 LEFT_ARM = tuple(f"left_arm_{index}" for index in range(7))
@@ -14,44 +15,132 @@ RIGHT_ARM = tuple(f"right_arm_{index}" for index in range(7))
 LEFT_GRIPPER = ("left_finger_1", "left_finger_2")
 RIGHT_GRIPPER = ("right_finger_1", "right_finger_2")
 JOINT_NAMES = LEFT_ARM + RIGHT_ARM + LEFT_GRIPPER + RIGHT_GRIPPER
+INITIAL_POSES = {
+    "left": Pose(np.asarray([0.3, 0.2, 0.5]), np.asarray([0.0, 0.0, 0.0, 1.0])),
+    "right": Pose(np.asarray([0.3, -0.2, 0.5]), np.asarray([0.0, 0.0, 0.0, 1.0])),
+}
 
 
-def _controller(*, initial: float = 0.0, step: float = 0.1) -> JointJogTeleop:
-    return JointJogTeleop(
+def _controller(
+    *,
+    initial: float = 0.0,
+    step_m: float = 0.1,
+    radius_m: float = 0.25,
+) -> EndEffectorTeleop:
+    return EndEffectorTeleop(
         joint_names=JOINT_NAMES,
         initial_positions=np.full(len(JOINT_NAMES), initial),
         joint_limits=np.tile((-0.2, 0.2), (len(JOINT_NAMES), 1)),
+        initial_poses_by_side=INITIAL_POSES,
         arm_joints_by_side={"left": LEFT_ARM, "right": RIGHT_ARM},
         gripper_joints_by_side={"left": LEFT_GRIPPER, "right": RIGHT_GRIPPER},
         gripper_open_positions=(-0.1, -0.1),
         gripper_closed_positions=(0.15, 0.15),
-        jog_step_rad=step,
+        jog_step_m=step_m,
+        workspace_radius_m=radius_m,
     )
 
 
-def test_right_arm_is_default_and_joint_jog_is_limit_clamped() -> None:
-    controller = _controller(initial=0.15)
-    assert controller.selected_joint_name == RIGHT_ARM[0]
+@pytest.mark.parametrize(
+    ("key", "delta"),
+    (
+        ("W", (0.1, 0.0, 0.0)),
+        ("S", (-0.1, 0.0, 0.0)),
+        ("A", (0.0, 0.1, 0.0)),
+        ("D", (0.0, -0.1, 0.0)),
+        ("R", (0.0, 0.0, 0.1)),
+        ("F", (0.0, 0.0, -0.1)),
+    ),
+)
+def test_right_arm_is_default_and_keys_translate_in_robot_base(
+    key: str,
+    delta: tuple[float, float, float],
+) -> None:
+    controller = _controller()
+    event = controller.press(key)
 
-    event = controller.press("RIGHT")
-    assert event is not None and event.kind == "jog"
-    index = JOINT_NAMES.index(RIGHT_ARM[0])
-    assert controller.absolute_targets[index] == pytest.approx(0.2)
+    assert event is not None and event.kind == "cartesian"
+    np.testing.assert_allclose(
+        controller.target_pose("right").position,
+        INITIAL_POSES["right"].position + np.asarray(delta),
+    )
+    np.testing.assert_allclose(
+        controller.target_pose("right").quaternion_xyzw,
+        INITIAL_POSES["right"].quaternion_xyzw,
+    )
+    np.testing.assert_allclose(
+        controller.target_pose("left").position,
+        INITIAL_POSES["left"].position,
+    )
+    np.testing.assert_allclose(
+        controller.target_pose("left").quaternion_xyzw,
+        INITIAL_POSES["left"].quaternion_xyzw,
+    )
 
-    controller.press("RIGHT")
-    assert controller.absolute_targets[index] == pytest.approx(0.2)
+
+def test_tab_switches_arm_and_multiple_presses_coalesce_into_latest_request() -> None:
+    controller = _controller()
+    assert controller.press("KEY_TAB").message == "active arm: left"
+    controller.press("KEY_W")
+    controller.press("A")
+
+    np.testing.assert_allclose(
+        controller.target_pose("left").position,
+        INITIAL_POSES["left"].position + np.asarray([0.1, 0.1, 0.0]),
+    )
+    pending = controller.pending_targets
+    assert len(pending) == 1
+    assert pending[0][0] == "left"
+    assert pending[0][1] == 2
 
 
-def test_tab_number_selection_and_left_jog_change_only_selected_joint() -> None:
+def test_reset_pose_workspace_radius_rejects_excess_translation() -> None:
+    controller = _controller(step_m=0.1, radius_m=0.15)
+    assert controller.press("W").kind == "cartesian"
+    event = controller.press("W")
+
+    assert event is not None and event.kind == "workspace_limit"
+    np.testing.assert_allclose(
+        controller.target_pose("right").position,
+        INITIAL_POSES["right"].position + np.asarray([0.1, 0.0, 0.0]),
+    )
+    assert controller.pending_targets[0][1] == 1
+
+
+def test_accept_ik_solution_updates_only_selected_arm_and_clears_request() -> None:
+    controller = _controller()
+    controller.press("W")
+    side, revision, _ = controller.pending_targets[0]
+    solution = {name: 0.15 for name in RIGHT_ARM}
+
+    controller.accept_ik_solution(side, revision, solution)
+
+    targets = controller.absolute_targets
+    np.testing.assert_allclose(
+        targets[[JOINT_NAMES.index(name) for name in RIGHT_ARM]],
+        0.15,
+    )
+    np.testing.assert_allclose(
+        targets[[JOINT_NAMES.index(name) for name in LEFT_ARM]],
+        0.0,
+    )
+    assert controller.pending_targets == ()
+
+
+def test_reject_ik_solution_rolls_pose_back_without_joint_change() -> None:
     controller = _controller()
     before = controller.absolute_targets
-    assert controller.press("TAB").message == "active arm: left"
-    assert controller.press("KEY_7").message == f"selected {LEFT_ARM[6]}"
-    controller.press("LEFT")
+    controller.press("F")
+    side, revision, _ = controller.pending_targets[0]
 
-    expected = before.copy()
-    expected[JOINT_NAMES.index(LEFT_ARM[6])] = -0.1
-    np.testing.assert_allclose(controller.absolute_targets, expected)
+    controller.reject_ik_solution(side, revision)
+
+    np.testing.assert_allclose(
+        controller.target_pose("right").position,
+        INITIAL_POSES["right"].position,
+    )
+    np.testing.assert_allclose(controller.absolute_targets, before)
+    assert controller.pending_targets == ()
 
 
 def test_gripper_commands_apply_only_to_active_side() -> None:
@@ -78,18 +167,19 @@ def test_gripper_commands_apply_only_to_active_side() -> None:
 
 def test_quit_keys_are_explicit_and_unknown_keys_are_ignored() -> None:
     controller = _controller()
-    assert controller.press("W") is None
+    assert controller.press("LEFT") is None
     assert not controller.quit_requested
-    assert controller.press("ESCAPE").kind == "quit"
+    assert controller.press("KEY_ESCAPE").kind == "quit"
     assert controller.quit_requested
 
 
 def test_constructor_rejects_missing_control_joints() -> None:
     with pytest.raises(ValueError, match="absent from action order"):
-        JointJogTeleop(
+        EndEffectorTeleop(
             joint_names=JOINT_NAMES[:-1],
             initial_positions=np.zeros(len(JOINT_NAMES) - 1),
             joint_limits=np.tile((-1.0, 1.0), (len(JOINT_NAMES) - 1, 1)),
+            initial_poses_by_side=INITIAL_POSES,
             arm_joints_by_side={"left": LEFT_ARM, "right": RIGHT_ARM},
             gripper_joints_by_side={"left": LEFT_GRIPPER, "right": RIGHT_GRIPPER},
             gripper_open_positions=(-0.1, -0.1),

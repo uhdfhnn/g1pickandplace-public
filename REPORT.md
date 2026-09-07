@@ -14,28 +14,30 @@ visible-GUI procedure is
 | Red-on-yellow stack | PASS on calibrated8, including native LeRobot Gate E |
 | Shovel tool use | PARTIAL physical evidence only; Gate21 preflight passed, but no successful scoop or completed valid recording |
 
-## Keyboard teleoperation deliverable
+## End-effector keyboard teleoperation deliverable
 
-The final deliverable also includes a visible keyboard teleoperation demo for
-the same public G1 29-DoF Dex1 Stack-RgyBlock scene:
+The final deliverable also includes a visible Cartesian wrist teleoperation
+demo for the same public G1 29-DoF Dex1 Stack-RgyBlock scene:
 
 ~~~bash
 python3 scripts/run_demo.py --keyboard-teleop
 ~~~
 
-After focusing the Isaac Sim viewport, `Tab` switches arms, `1`–`7` selects a
-shoulder-to-wrist joint, the arrow keys jog the selected target by 2 degrees,
-`O`/`C` opens or closes that side's gripper, and `Q`/`Esc` exits. Targets are
-clamped against the live soft joint limits and all other joints hold their
-captured reset targets. The run is identified as `manual_joint_jog` in its
-`teleop.log` completion record.
+After focusing the Isaac Sim viewport, `Tab` switches arms; `W`/`S`, `A`/`D`,
+and `R`/`F` translate the selected wrist by 1 cm along robot-base X, Y, and Z;
+`O`/`C` opens or closes that side's gripper; and `Q`/`Esc` exits. Wrist
+orientation is held at reset. A 15 cm reset-relative workspace bound, live soft
+joint limits, and collision-aware Pinocchio IK gate every Cartesian request.
+The run is identified as `manual_end_effector_ik` in its `teleop.log`
+completion record.
 
 This optional manual mode is intentionally outside the autonomous entrance-test
 acceptance evidence. It exits before reset-snapshot planning, constructs no
-`OpenLoopPolicy`, performs no online IK, does not record a LeRobot episode, and
-does not report a manipulation PASS. Its purpose is operator inspection,
-joint-direction checks, and simple manual scene interaction without changing
-the validated open-loop deliverable.
+`OpenLoopPolicy`, performs only operator-triggered local IK, does not record a
+LeRobot episode, and does not report an autonomous manipulation PASS. Its
+purpose is operator inspection and simple manual scene interaction without
+changing the validated open-loop deliverable. The new Cartesian mode requires
+a visible physical revalidation before it is reported as a teleoperation PASS.
 
 The accepted Task 1 red run physically lifted 0.074059 m, transported 0.133814
 m, measured 0.047375 m edge clearance for a 0.05 m request, left both

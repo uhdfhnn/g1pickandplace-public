@@ -3244,8 +3244,8 @@ parser.add_argument(
     "--keyboard-teleop",
     action="store_true",
     help=(
-        "run the separate visible joint-jog demo; this bypasses trajectory planning, "
-        "OpenLoopPolicy, evaluation, and recording"
+        "run separate collision-gated Cartesian wrist teleoperation; this bypasses "
+        "autonomous trajectory planning, OpenLoopPolicy, evaluation, and recording"
     ),
 )
 
@@ -3476,7 +3476,7 @@ from g1pickplace import (
     ResetTimePickPlacePlanner,
 )  # noqa: E402
 from g1pickplace.evaluation import evaluate_pick_place  # noqa: E402
-from g1pickplace.keyboard_teleop import JointJogTeleop  # noqa: E402
+from g1pickplace.keyboard_teleop import EndEffectorTeleop  # noqa: E402
 
 
 def _apply_exact_object_reset(env_cfg: Any, offsets: tuple[float, float, float]) -> None:
@@ -5242,27 +5242,68 @@ def _run_keyboard_teleop(
     current: np.ndarray,
     defaults: np.ndarray,
 ) -> dict[str, Any]:
-    """Hold a manual, limit-clamped joint target until Q/Escape or GUI close."""
+    """Run collision-gated Cartesian wrist teleoperation until clean exit."""
 
     # Imported after SimulationApp startup because Carb and Omni interfaces are
-    # Kit-owned.  This mode is intentionally separate from the autonomous
-    # expert: it performs no IK, creates no OpenLoopPolicy, and claims no task
-    # acceptance result.
+    # Kit-owned. This mode is intentionally separate from the autonomous
+    # expert: it solves only operator-requested local wrist targets, creates no
+    # OpenLoopPolicy, and claims no autonomous task-acceptance result.
     import carb
     import omni.appwindow
 
-    controller = JointJogTeleop(
+    from g1pickplace.offline_ik import IKPlanningError, PinocchioFrameIK
+
+    arm_joints_by_side = {
+        "left": DEX1_LEFT_ACTIVE_JOINT_NAMES,
+        "right": DEX1_RIGHT_ACTIVE_JOINT_NAMES,
+    }
+    gripper_joints_by_side = {
+        "left": DEX1_LEFT_GRIPPER_JOINT_NAMES,
+        "right": DEX1_RIGHT_GRIPPER_JOINT_NAMES,
+    }
+    frame_by_side = {
+        "left": DEX1_LEFT_EE_FRAME,
+        "right": DEX1_RIGHT_EE_FRAME,
+    }
+    action_limits = _ordered_joint_limits(env, action_names)
+    index_by_action_name = {name: index for index, name in enumerate(action_names)}
+    robot_base_world = _root_pose(env, "robot")
+    base_from_world = robot_base_world.inverse()
+    initial_poses_by_side = {
+        side: base_from_world.compose(_body_pose(env, frame_name))
+        for side, frame_name in frame_by_side.items()
+    }
+    ik_by_side = {}
+    for side, active_joints in arm_joints_by_side.items():
+        missing = [name for name in active_joints if name not in index_by_action_name]
+        if missing:
+            raise RuntimeError(f"{side} teleop arm joints are absent from action order: {missing}")
+        active_joint_limits = {
+            name: tuple(float(bound) for bound in action_limits[index_by_action_name[name]])
+            for name in active_joints
+        }
+        ik = PinocchioFrameIK(
+            urdf_path=args.urdf,
+            frame_name=frame_by_side[side],
+            active_joint_names=active_joints,
+            package_dirs=args.package_dir,
+            joint_position_limits=active_joint_limits,
+            # Every discrete operator request is collision-checked from the
+            # currently applied target before it can reach env.step. Disabling
+            # this would turn the local reset-pose radius into the only safety
+            # gate and could admit arm/torso self-collisions.
+            enable_collision_checking=True,
+        )
+        ik.validate_configuration(f"teleop {side} initial", action_names, current)
+        ik_by_side[side] = ik
+
+    controller = EndEffectorTeleop(
         joint_names=action_names,
         initial_positions=current,
-        joint_limits=_ordered_joint_limits(env, action_names),
-        arm_joints_by_side={
-            "left": DEX1_LEFT_ACTIVE_JOINT_NAMES,
-            "right": DEX1_RIGHT_ACTIVE_JOINT_NAMES,
-        },
-        gripper_joints_by_side={
-            "left": DEX1_LEFT_GRIPPER_JOINT_NAMES,
-            "right": DEX1_RIGHT_GRIPPER_JOINT_NAMES,
-        },
+        joint_limits=action_limits,
+        initial_poses_by_side=initial_poses_by_side,
+        arm_joints_by_side=arm_joints_by_side,
+        gripper_joints_by_side=gripper_joints_by_side,
         gripper_open_positions=DEX1_GRIPPER_OPEN_POSITIONS,
         gripper_closed_positions=DEX1_GRIPPER_CLOSED_POSITIONS,
     )
@@ -5287,21 +5328,53 @@ def _run_keyboard_teleop(
         on_keyboard_event,
     )
     steps = 0
+    ik_solves = 0
+    ik_rejections = 0
     print(
-        "[teleop] controls: TAB switch arm | 1-7 select shoulder-to-wrist joint | "
-        "LEFT/RIGHT jog -/+ 2 deg | O open | C close | Q or ESC quit",
+        "[teleop] controls (robot-base frame): TAB switch arm | "
+        "W/S +X/-X forward/back | A/D +Y/-Y left/right | "
+        "R/F +Z/-Z up/down | O open | C close | Q or ESC quit",
         flush=True,
     )
-    print(
-        f"[teleop] active arm: {controller.side}; selected {controller.selected_joint_name}",
-        flush=True,
-    )
+    for side in ("right", "left"):
+        position = controller.target_pose(side).position
+        print(
+            f"[teleop] {side} wrist reset target base xyz="
+            f"({position[0]:+.3f}, {position[1]:+.3f}, {position[2]:+.3f}) m",
+            flush=True,
+        )
+    print(f"[teleop] active arm: {controller.side}", flush=True)
     try:
         while simulation_app.is_running() and not controller.quit_requested:
+            for side, revision, target in controller.pending_targets:
+                ik = ik_by_side[side]
+                q_seed = ik.q_from_named_positions(
+                    action_names,
+                    controller.absolute_targets,
+                )
+                try:
+                    solved = ik.solve(f"teleop-{side}-{revision}", target, q_seed)
+                except IKPlanningError as exc:
+                    controller.reject_ik_solution(side, revision)
+                    ik_rejections += 1
+                    print(f"[teleop] rejected {side} wrist request: {exc}", flush=True)
+                    continue
+                controller.accept_ik_solution(
+                    side,
+                    revision,
+                    ik.named_positions_from_q(solved.q, arm_joints_by_side[side]),
+                )
+                ik_solves += 1
+                print(
+                    f"[teleop] applied {side} wrist request: "
+                    f"iterations={solved.iterations}, residual={solved.residual:.6g}",
+                    flush=True,
+                )
+
             # The live JointPositionAction term consumes offsets from the
-            # configured reset default.  All non-jogged joints retain their
-            # captured reset targets, and the pure state object clamps each
-            # edited absolute target to the live soft joint limits.
+            # configured reset default. Unselected joints retain their most
+            # recently accepted absolute targets; rejected IK requests never
+            # reach this action tensor.
             action = (controller.absolute_targets - defaults).astype(np.float32)
             _, _, _, _, _ = env.step(
                 torch.as_tensor(action, dtype=torch.float32, device=env.device).unsqueeze(0)
@@ -5315,7 +5388,11 @@ def _run_keyboard_teleop(
         "status": "PASS",
         "reason": reason,
         "steps": steps,
-        "mode": "manual_joint_jog",
+        "mode": "manual_end_effector_ik",
+        "coordinate_frame": "robot_base",
+        "orientation_control": "fixed_at_reset",
+        "ik_solves": ik_solves,
+        "ik_rejections": ik_rejections,
     }
 
 

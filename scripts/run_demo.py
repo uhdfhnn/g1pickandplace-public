@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Visible entry point for autonomous gates and manual keyboard teleoperation.
+"""Visible entry point for autonomous gates and Cartesian keyboard teleoperation.
 
 The wrapper deliberately delegates all simulation behavior to
 scripts/run_unitree_mvp.py. It owns only subprocess ordering, paths, logging,
@@ -155,7 +155,7 @@ def _default_output_dir() -> Path:
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
-            "Run visible autonomous gates or the separate manual keyboard joint-jog "
+            "Run visible autonomous gates or the separate manual end-effector "
             "demo for the public G1 scene."
         )
     )
@@ -167,7 +167,10 @@ def _parser() -> argparse.ArgumentParser:
     mode.add_argument(
         "--keyboard-teleop",
         action="store_true",
-        help="launch manual dual-arm joint jog; no autonomous rollout or recording",
+        help=(
+            "launch collision-gated dual-arm Cartesian wrist teleoperation; "
+            "no autonomous rollout or recording"
+        ),
     )
     # Rollout is opt-in so the safe default performs only visible inspect and
     # plan. This flag is a gate request, not a feedback or recovery mechanism.
