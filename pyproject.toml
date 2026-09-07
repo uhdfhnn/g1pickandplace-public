@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "g1pickplace"
+version = "0.1.0"
+description = "Independent reset-time open-loop IK MVP for Unitree G1 in Isaac Lab"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Michael Hu" }]
+dependencies = ["numpy>=1.24"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+# Pinocchio 2.7.0 is the exact solver ABI used by the accepted visible runs with
+# the validated cmeel/HPP-FCL stack. Moving higher can reintroduce the Assimp
+# symbol collision or change IK results. It is intentionally fixed and should
+# move only after a visible gate and the dependency-light suite pass. LeRobot's
+# dataset-only stack is installed separately from requirements-recording.txt so
+# its unrelated training dependencies cannot replace Isaac Sim packages.
+isaac = ["pin==2.7.0"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"
