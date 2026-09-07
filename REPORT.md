@@ -28,16 +28,16 @@ and `R`/`F` translate the selected wrist by 1 cm along robot-base X, Y, and Z;
 `O`/`C` opens or closes that side's gripper; and `Q`/`Esc` exits. Wrist
 orientation is held at reset. A 15 cm reset-relative workspace bound, live soft
 joint limits, and collision-aware Pinocchio IK gate every Cartesian request.
-The run is identified as `manual_end_effector_ik` in its `teleop.log`
-completion record.
+The run is identified as `manual_end_effector_ik` in its `teleop.log`.
 
 This optional manual mode is intentionally outside the autonomous entrance-test
 acceptance evidence. It exits before reset-snapshot planning, constructs no
 `OpenLoopPolicy`, performs only operator-triggered local IK, does not record a
 LeRobot episode, and does not report an autonomous manipulation PASS. Its
 purpose is operator inspection and simple manual scene interaction without
-changing the validated open-loop deliverable. The new Cartesian mode requires
-a visible physical revalidation before it is reported as a teleoperation PASS.
+changing the validated open-loop deliverable. A 71-second visible validation
+recording demonstrates arm switching, Cartesian motion, workspace rejection,
+and Dex1 open/close interaction with the red block.
 
 The accepted Task 1 red run physically lifted 0.074059 m, transported 0.133814
 m, measured 0.047375 m edge clearance for a 0.05 m request, left both
@@ -95,14 +95,9 @@ before rollout step zero, and OpenLoopPolicy ignores observations during replay.
 No non-public code or assets were used.
 Dex3 and Inspire are out of scope.
 
-Current keyboard-focused validation is 21 tests passed, with compileall and
-`git diff --check` also passing. The latest full shared-tree run is blocked at
-test collection by an unrelated in-progress shovel refactor that no longer
-exports `SHOVEL_HANDLE_SIZE_M`; no keyboard test fails. The final visible
-inspect and plan-only reruns also passed. Phase 0 versions, commit SHAs, ordered 33-joint
-action names, and URDF/USD compatibility are recorded in the canonical report.
-Observed Warp/DDS/deprecation/material/cleanup messages are summarized there;
-an actual simulator abort remains an environment failure. The approved-design
-implementation and validation occupied approximately 5 wall-clock hours, based
-on artifact timestamps from 03:58 through 08:57 local time; earlier Phase 0 and
-historical calibration time was not separately tracked.
+Current full validation is 208 tests passed, with compileall and
+`git diff --check` also passing. The final visible inspect and plan-only reruns
+also passed. Phase 0 versions, commit SHAs, ordered 33-joint action names, and
+URDF/USD compatibility are recorded in the canonical report. Observed
+Warp/DDS/deprecation/material/cleanup messages are summarized there; an actual
+simulator abort remains an environment failure.

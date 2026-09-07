@@ -9,7 +9,7 @@ the public `Isaac-Stack-RgyBlock-G129-Dex1-Joint` scene.
 | Task 2 | Instruction-conditioned selection among red, yellow, and green blocks | **PASS** for the recorded green/right prompt; red and yellow are plan-gated |
 | Task 3 | Multi-object interaction: stack the red block on the yellow block | **PASS** |
 | Task 4 | Tool use: grasp a shovel, scoop the red block, and unload it into a tray | **PARTIAL**; no successful scoop yet |
-| Teleoperation | Collision-gated Cartesian keyboard control of either wrist and Dex1 gripper | **IMPLEMENTED**; visible physical revalidation pending |
+| Teleoperation | Collision-gated Cartesian keyboard control of either wrist and Dex1 gripper | **VALIDATED**; visible manual wrist/gripper interaction recorded |
 | Cosmos | First-frame policy inference, G1 action adaptation, safety preflight, and three-view replay | **PIPELINE PASS / TASK FAIL** on the recorded stack prompt |
 
 > [!IMPORTANT]
@@ -84,8 +84,8 @@ visible-gate commands are in
 Clone the project and run the reproducible bootstrap:
 
 ```bash
-git clone https://github.com/uhdfhnn/g1pickandplace.git
-cd g1pickandplace
+git clone https://github.com/uhdfhnn/g1pickandplace-public.git
+cd g1pickandplace-public
 bash scripts/setup_environment.sh
 ```
 
@@ -102,7 +102,7 @@ python3 -m compileall -q src scripts tests
 git diff --check
 ```
 
-Current validation: **186 tests passed**; compilation and whitespace checks
+Current validation: **208 tests passed**; compilation and whitespace checks
 passed.
 
 ## 2. Task 1 result — relative placement
@@ -252,12 +252,21 @@ partial attempts.
 The videos below are **negative/partial evidence** and must not be presented as
 a successful scoop.
 
-| RGB evidence | Artifact path |
-| --- | --- |
-| Head/front video | `outputs/task4_graspcenter_rollout_02/lerobot/videos/observation.images.front/chunk-000/file-000.mp4` |
-| Left-wrist video | `outputs/task4_graspcenter_rollout_02/lerobot/videos/observation.images.left_wrist/chunk-000/file-000.mp4` |
-| Right-wrist video | `outputs/task4_graspcenter_rollout_02/lerobot/videos/observation.images.right_wrist/chunk-000/file-000.mp4` |
-| Latest partial key frames | `outputs/task4_drive2x_rollout_06/rollout_frames/` |
+**Head/front RGB — negative rollout**
+
+https://github.com/user-attachments/assets/cedc4083-727e-428a-a44c-becb965d1160
+
+**Left-wrist RGB — negative rollout**
+
+https://github.com/user-attachments/assets/47abfde1-f993-445b-958a-5804c08b523c
+
+**Right-wrist RGB — negative rollout**
+
+https://github.com/user-attachments/assets/121e30df-cb7a-49eb-92db-4328a1025c72
+
+Artifact paths in the full bundle:
+`outputs/task4_graspcenter_rollout_02/lerobot/videos/` and
+`outputs/task4_drive2x_rollout_06/rollout_frames/`.
 
 **Problem encountered:** holding the tool through lift and transport remains
 the limiting failure. Doubling the left-finger drive gains did not fix it,
@@ -268,8 +277,10 @@ which points to grasp/contact geometry rather than configured gain alone.
 **Text prompt:** not applicable. This is direct manual keyboard control, not a
 language-conditioned autonomous task.
 
-**Result: IMPLEMENTED; visible physical revalidation pending.** The operator
-can switch arms and translate the selected wrist in the robot-base frame:
+**Result: VALIDATED.** The recorded visible run demonstrates arm switching,
+Cartesian wrist translation, workspace-limit rejection, and physical Dex1
+open/close interaction with the red block. The operator can switch arms and
+translate the selected wrist in the robot-base frame:
 forward/backward X, left/right Y, and up/down Z. Each key press requests a
 1 cm move while holding the reset wrist orientation. A 15 cm reset-relative
 workspace bound, live simulator joint limits, and collision-aware Pinocchio IK
@@ -278,17 +289,16 @@ operator can also open or close the selected Dex1 gripper. Teleoperation is
 isolated from the autonomous path: it does not construct `OpenLoopPolicy`,
 evaluate task success, or create a LeRobot episode.
 
-**Data collected:** a timestamped `teleop.log` containing the
-`manual_end_effector_ik` mode, robot-base coordinate convention, fixed
-orientation policy, accepted/rejected IK counts, and clean-exit evidence. No
-autonomous trajectory, success label, or training episode is created, because
-manual teleoperation is a control-verification demo rather than a recording
-mode.
+**Data collected:** a 71-second visible screen recording and a timestamped
+`teleop.log` containing the `manual_end_effector_ik` mode, robot-base
+coordinate convention, fixed-orientation policy, accepted/rejected IK
+requests, and gripper commands. No autonomous trajectory, success label, or
+training episode is created, because manual teleoperation is a
+control-verification demo rather than a data-collection mode.
 
-There is no dedicated prerecorded teleoperation RGB video in the current local
-artifact set. A run is verifiable from the visible viewport and
-`teleop.log`; a future head/wrist capture can be published separately without
-adding large media files to Git.
+**Visible end-effector teleoperation**
+
+https://github.com/user-attachments/assets/714ee2a0-3418-42e7-bf9c-a3feed41aeda
 
 **Problem encountered:** the simulator viewport must have keyboard focus, and
 Cartesian requests can be rejected at workspace, joint-limit, IK, or collision

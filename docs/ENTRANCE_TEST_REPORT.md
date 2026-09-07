@@ -253,7 +253,7 @@ a complete evaluator-valid result is captured.
 Current dependency-light validation:
 
 ~~~text
-pytest: 168 passed
+pytest: 208 passed
 compileall: passed
 git diff --check: passed
 ~~~
@@ -274,7 +274,4 @@ unset.
 
 Only public Unitree, Isaac Lab, Pinocchio, and LeRobot APIs/assets were used.
 Non-public code and assets were not accessed, copied, imitated, translated, or
-ported. The approved-design
-implementation and validation occupied approximately 5 wall-clock hours,
-based on artifact timestamps from 03:58 through 08:57 local time. Earlier
-Phase 0 and historical calibration time was not separately tracked.
+ported.
