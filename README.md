@@ -13,10 +13,12 @@ the public `Isaac-Stack-RgyBlock-G129-Dex1-Joint` scene.
 | Cosmos | First-frame policy inference, G1 action adaptation, safety preflight, and three-view replay | **PIPELINE PASS / TASK FAIL** on the recorded stack prompt |
 
 > [!IMPORTANT]
-> **The result sections below link directly to the published RGB videos.**
-> Large trajectories, logs, and LeRobot datasets are intentionally kept outside
-> Git while the sanitized artifact bundle is prepared. The paths below identify
-> their locations inside that bundle or the local `outputs/` tree.
+> **Full artifact bundle:** [Open the sanitized Google Drive folder](https://drive.google.com/drive/folders/1ymrNqLwD-4VxWCrw5eiCdH7-AAMfuNw-?usp=drive_link)
+>
+> The result sections below also provide native GitHub playback for the
+> published RGB videos. Large trajectories, logs, and LeRobot datasets are
+> intentionally kept outside Git; the documented paths identify their
+> locations inside the Drive bundle or the local `outputs/` tree.
 
 ## Project brief and coverage
 
