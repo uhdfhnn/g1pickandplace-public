@@ -173,6 +173,20 @@ def test_quit_keys_are_explicit_and_unknown_keys_are_ignored() -> None:
     assert controller.quit_requested
 
 
+@pytest.mark.parametrize(
+    "key",
+    ("W", "S", "A", "D", "R", "F", "O", "C", "TAB", "Q", "ESCAPE"),
+)
+def test_control_keys_are_owned_for_viewport_event_consumption(key: str) -> None:
+    assert EndEffectorTeleop.handles_key(key)
+    assert EndEffectorTeleop.handles_key(f"KEY_{key}")
+
+
+def test_unmapped_keys_remain_available_to_isaac_sim() -> None:
+    assert not EndEffectorTeleop.handles_key("LEFT")
+    assert not EndEffectorTeleop.handles_key("KEY_SPACE")
+
+
 def test_constructor_rejects_missing_control_joints() -> None:
     with pytest.raises(ValueError, match="absent from action order"):
         EndEffectorTeleop(
@@ -201,3 +215,9 @@ def test_runner_exits_to_teleop_before_snapshot_planning_or_policy() -> None:
     snapshot = source.index("_capture_demo_reset_snapshot(")
     policy = source.index("policy = OpenLoopPolicy(trajectory)")
     assert teleop < snapshot < policy
+
+
+def test_runner_consumes_all_teleop_owned_keyboard_event_types() -> None:
+    script = Path(__file__).parents[1] / "scripts" / "run_unitree_mvp.py"
+    source = script.read_text(encoding="utf-8")
+    assert "return not controller.handles_key(key_name)" in source

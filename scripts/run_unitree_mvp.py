@@ -5316,12 +5316,20 @@ def _run_keyboard_teleop(
         raise RuntimeError("visible Omniverse app window has no keyboard device")
 
     def on_keyboard_event(event: Any, *_: Any) -> bool:
-        if event.type != carb.input.KeyboardEventType.KEY_PRESS:
-            return True
-        result = controller.press(event.input.name)
-        if result is not None:
-            print(f"[teleop] {result.message}", flush=True)
-        return True
+        key_name = event.input.name
+        if event.type == carb.input.KeyboardEventType.KEY_PRESS:
+            result = controller.press(key_name)
+            if result is not None:
+                print(f"[teleop] {result.message}", flush=True)
+        # Carb's callback contract uses False to stop subsequent subscribers.
+        # Consume press, repeat, and release for every teleop-owned key so an R
+        # wrist-up request cannot also trigger the Isaac Sim viewport's camera
+        # shortcut (the 2026-09-06 visible trace showed that apparent scene
+        # disappearance).  Unknown keys return True and retain normal viewport
+        # behavior.  This decision is keyed to the controller's declared input
+        # contract rather than a duplicated list, so changing the teleop map
+        # updates propagation behavior at the same definition.
+        return not controller.handles_key(key_name)
 
     subscription = input_interface.subscribe_to_keyboard_events(
         keyboard,

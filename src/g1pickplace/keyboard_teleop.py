@@ -70,6 +70,31 @@ class EndEffectorTeleop:
         "F": (0.0, 0.0, -1.0),
     }
 
+    # These non-Cartesian keys complete the manual-control surface: Q/Escape
+    # request shutdown, Tab switches the active arm, and O/C open/close its
+    # gripper.  Together with ``_CARTESIAN_KEYS`` they define which physical
+    # keyboard events the teleop callback must consume before Isaac Sim's
+    # viewport hotkeys see them.  The strings come directly from Carb's key
+    # names and have no units or coordinate frame.  Omitting a control key can
+    # move the viewport as well as the robot; adding an unrelated key would
+    # unnecessarily disable an Isaac Sim shortcut.  This set is intentionally
+    # fixed to the printed teleop contract and must change with that contract.
+    _COMMAND_KEYS = frozenset(("Q", "ESCAPE", "TAB", "O", "C"))
+
+    @staticmethod
+    def _normalized_key(key_name: str) -> str:
+        """Return one Carb key name in the controller's canonical form."""
+
+        key = str(key_name).upper()
+        return key.removeprefix("KEY_") if key.startswith("KEY_") else key
+
+    @classmethod
+    def handles_key(cls, key_name: str) -> bool:
+        """Return whether teleop owns this key and must stop its propagation."""
+
+        key = cls._normalized_key(key_name)
+        return key in cls._CARTESIAN_KEYS or key in cls._COMMAND_KEYS
+
     def __init__(
         self,
         *,
@@ -233,9 +258,7 @@ class EndEffectorTeleop:
     def press(self, key_name: str) -> TeleopEvent | None:
         """Apply one normalized Omniverse key press."""
 
-        key = str(key_name).upper()
-        if key.startswith("KEY_"):
-            key = key.removeprefix("KEY_")
+        key = self._normalized_key(key_name)
         if key in ("Q", "ESCAPE"):
             self.quit_requested = True
             return TeleopEvent("quit", "quit requested")
