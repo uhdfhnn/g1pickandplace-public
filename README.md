@@ -121,12 +121,24 @@ edge clearance for a requested `0.050000 m`. Yellow and green did not move.
 state/action; text prompt; front, left-wrist, and right-wrist RGB; object and
 target poses; phase labels; matching frozen/recorded action hashes.
 
-| RGB evidence | Watch | Artifact path |
-| --- | --- | --- |
-| Head/front video | [▶ Watch video](https://drive.google.com/file/d/1JlmM4kwImfyBn7vcnx8hwvlnDq952MAc/view?usp=drive_link) | `deliverables/unitree_g1_manipulation_task123/task1_relative_place/base/lerobot/videos/observation.images.front/chunk-000/file-000.mp4` |
-| Left-wrist video | [▶ Watch video](https://drive.google.com/file/d/1Qzb36WMKL8qFTX_iEt0erICvo8g4GUR7/view?usp=drive_link) | `deliverables/unitree_g1_manipulation_task123/task1_relative_place/base/lerobot/videos/observation.images.left_wrist/chunk-000/file-000.mp4` |
-| Right-wrist video | [▶ Watch video](https://drive.google.com/file/d/10uN3zpTRm5dytMDAP5wwy4JEYEDKZQhT/view?usp=drive_link) | `deliverables/unitree_g1_manipulation_task123/task1_relative_place/base/lerobot/videos/observation.images.right_wrist/chunk-000/file-000.mp4` |
-| Overall rollout | [▶ Watch video](https://drive.google.com/file/d/1ZjWzbpbgAkn6o9k26hZnWyviYZxp5NvD/view?usp=drive_link) | `deliverables/unitree_g1_manipulation_task123/recordings/task1_relative_place_front_from_waypoint0.mp4` |
+**Head/front RGB** ([Drive original](https://drive.google.com/file/d/1JlmM4kwImfyBn7vcnx8hwvlnDq952MAc/view?usp=drive_link))
+
+https://github.com/user-attachments/assets/604cf3e0-399d-4434-aa83-be3a7d7b2212
+
+**Left-wrist RGB** ([Drive original](https://drive.google.com/file/d/1Qzb36WMKL8qFTX_iEt0erICvo8g4GUR7/view?usp=drive_link))
+
+https://github.com/user-attachments/assets/df7e3968-6cde-42c3-89b4-e3e63d7e728a
+
+**Right-wrist RGB** ([Drive original](https://drive.google.com/file/d/10uN3zpTRm5dytMDAP5wwy4JEYEDKZQhT/view?usp=drive_link))
+
+https://github.com/user-attachments/assets/fbb4f636-886a-4984-a533-0b256c0354cf
+
+**Overall rollout** ([Drive original](https://drive.google.com/file/d/1ZjWzbpbgAkn6o9k26hZnWyviYZxp5NvD/view?usp=drive_link))
+
+https://github.com/user-attachments/assets/604cf3e0-399d-4434-aa83-be3a7d7b2212
+
+Artifact paths in the full bundle: `task1_relative_place/base/lerobot/videos/`
+and `recordings/task1_relative_place_front_from_waypoint0.mp4`.
 
 **Problem encountered:** one negative-offset reset variant passed planning but
 failed physical stability. It is retained as rejected evidence and is not
@@ -152,12 +164,24 @@ yellow stationary.
 state/action; the exact green/right prompt; three synchronized RGB streams;
 selected-object and target poses; phase labels; matching action hashes.
 
-| RGB evidence | Watch | Artifact path |
-| --- | --- | --- |
-| Head/front video | [▶ Watch video](https://drive.google.com/file/d/1dbkvV54NZpn2pAVb1Re7T5Fd3FxZSWOa/view?usp=drive_link) | `deliverables/unitree_g1_manipulation_task123/task2_type_conditioned_green/lerobot/videos/observation.images.front/chunk-000/file-000.mp4` |
-| Left-wrist video | [▶ Watch video](https://drive.google.com/file/d/138na70wxwaOQUEJ3oyV-Vl8Ug5d9oLSr/view?usp=drive_link) | `deliverables/unitree_g1_manipulation_task123/task2_type_conditioned_green/lerobot/videos/observation.images.left_wrist/chunk-000/file-000.mp4` |
-| Right-wrist video | [▶ Watch video](https://drive.google.com/file/d/1z06NbnHE_XB_clwYCo_D7VaB4u7wZOZO/view?usp=drive_link) | `deliverables/unitree_g1_manipulation_task123/task2_type_conditioned_green/lerobot/videos/observation.images.right_wrist/chunk-000/file-000.mp4` |
-| Overall rollout | [▶ Watch video](https://drive.google.com/file/d/1dn0G0OCR_Ygq_VwZULanZRU_x9zvoJCu/view?usp=drive_link) | `deliverables/unitree_g1_manipulation_task123/recordings/task2_type_conditioned_front_from_waypoint0.mp4` |
+**Head/front RGB** ([Drive original](https://drive.google.com/file/d/1dbkvV54NZpn2pAVb1Re7T5Fd3FxZSWOa/view?usp=drive_link))
+
+https://github.com/user-attachments/assets/7b00a29d-87ba-49e7-8138-85df0c2dfb37
+
+**Left-wrist RGB** ([Drive original](https://drive.google.com/file/d/138na70wxwaOQUEJ3oyV-Vl8Ug5d9oLSr/view?usp=drive_link))
+
+https://github.com/user-attachments/assets/f8fdaf13-4d57-49f8-a2bb-7ebd64402562
+
+**Right-wrist RGB** ([Drive original](https://drive.google.com/file/d/1z06NbnHE_XB_clwYCo_D7VaB4u7wZOZO/view?usp=drive_link))
+
+https://github.com/user-attachments/assets/a6fe66ea-8922-4a0c-a32a-c03ee84e8ecb
+
+**Overall rollout** ([Drive original](https://drive.google.com/file/d/1dn0G0OCR_Ygq_VwZULanZRU_x9zvoJCu/view?usp=drive_link))
+
+https://github.com/user-attachments/assets/7b00a29d-87ba-49e7-8138-85df0c2dfb37
+
+Artifact paths in the full bundle: `task2_type_conditioned_green/lerobot/videos/`
+and `recordings/task2_type_conditioned_front_from_waypoint0.mp4`.
 
 **Problem encountered:** language parsing is deliberately finite. Unsupported
 or conflicting paraphrases fail before simulation instead of silently
@@ -179,12 +203,24 @@ produced a stable stack with `0.003331 m` top-center XY error and
 state/action; stack prompt; three synchronized RGB streams; top/bottom object
 evidence; target pose and phase labels; matching action hashes.
 
-| RGB evidence | Watch | Artifact path |
-| --- | --- | --- |
-| Head/front video | [▶ Watch video](https://drive.google.com/file/d/1yDexVjFQo2vtrrBA3gReZBcOyNSebDM5/view?usp=drive_link) | `deliverables/unitree_g1_manipulation_task123/task3_red_on_yellow_stack/lerobot/videos/observation.images.front/chunk-000/file-000.mp4` |
-| Left-wrist video | [▶ Watch video](https://drive.google.com/file/d/15ViJSKjYmiE0BZykZ9famd94kVbpJadb/view?usp=drive_link) | `deliverables/unitree_g1_manipulation_task123/task3_red_on_yellow_stack/lerobot/videos/observation.images.left_wrist/chunk-000/file-000.mp4` |
-| Right-wrist video | [▶ Watch video](https://drive.google.com/file/d/16lLkBy6ldcYqFE-jfXYSFzOBuvdFKzFE/view?usp=drive_link) | `deliverables/unitree_g1_manipulation_task123/task3_red_on_yellow_stack/lerobot/videos/observation.images.right_wrist/chunk-000/file-000.mp4` |
-| Overall rollout | [▶ Watch video](https://drive.google.com/file/d/1ytWBIUbDDndcMCyxXEIgtGUdGv3zPFwr/view?usp=drive_link) | `deliverables/unitree_g1_manipulation_task123/recordings/task3_stack_front_from_waypoint0.mp4` |
+**Head/front RGB** ([Drive original](https://drive.google.com/file/d/1yDexVjFQo2vtrrBA3gReZBcOyNSebDM5/view?usp=drive_link))
+
+https://github.com/user-attachments/assets/e8fc8e06-9ec9-4db7-a5c7-4e4b08bc99e3
+
+**Left-wrist RGB** ([Drive original](https://drive.google.com/file/d/15ViJSKjYmiE0BZykZ9famd94kVbpJadb/view?usp=drive_link))
+
+https://github.com/user-attachments/assets/271642b8-dd4e-4911-a08f-cd40137b7906
+
+**Right-wrist RGB** ([Drive original](https://drive.google.com/file/d/16lLkBy6ldcYqFE-jfXYSFzOBuvdFKzFE/view?usp=drive_link))
+
+https://github.com/user-attachments/assets/b55d5536-0c3b-4be7-aa5c-9b54fb794f9c
+
+**Overall rollout** ([Drive original](https://drive.google.com/file/d/1ytWBIUbDDndcMCyxXEIgtGUdGv3zPFwr/view?usp=drive_link))
+
+https://github.com/user-attachments/assets/e8fc8e06-9ec9-4db7-a5c7-4e4b08bc99e3
+
+Artifact paths in the full bundle: `task3_red_on_yellow_stack/lerobot/videos/`
+and `recordings/task3_stack_front_from_waypoint0.mp4`.
 
 **Problem encountered:** an earlier calibration moved the yellow support block
 and failed stability. The accepted calibration was rerun through inspect,
@@ -279,12 +315,16 @@ prompt and request metadata; a `160 × 29` Cosmos action; initial G1 context;
 an 800-step frozen G1 replay trajectory; preflight metrics; final task metrics;
 and a 160-frame, 16-second concatenated RGB replay at 10 fps.
 
-| RGB evidence | Watch / artifact |
-| --- | --- |
-| Head + both wrists, concatenated replay | [▶ Watch Cosmos replay](https://drive.google.com/file/d/1DdDt3gB72vfI5tlEzAZkDOpmaKbyGyjX/view?usp=drive_link) |
-| First-frame head/wrist input | `outputs/cosmos_stack_red_on_yellow_16s/unitree_concat_view.png` |
-| Replay midpoint key frame | `outputs/cosmos_stack_red_on_yellow_16s_replay_run3/replay_midpoint.png` |
-| Model output and metadata | `outputs/cosmos_stack_red_on_yellow_16s/cosmos_policy_action.json` and `metadata.json` |
+**Head + both wrists, concatenated replay** ([Drive original](https://drive.google.com/file/d/1DdDt3gB72vfI5tlEzAZkDOpmaKbyGyjX/view?usp=drive_link))
+
+https://github.com/user-attachments/assets/204cfebc-221e-4524-80f4-23b31a5351a1
+
+Additional artifacts: first-frame head/wrist input at
+`outputs/cosmos_stack_red_on_yellow_16s/unitree_concat_view.png`; replay
+midpoint at `outputs/cosmos_stack_red_on_yellow_16s_replay_run3/replay_midpoint.png`;
+model output and metadata at
+`outputs/cosmos_stack_red_on_yellow_16s/cosmos_policy_action.json` and
+`metadata.json`.
 
 **Problem encountered:** Cosmos predicts normalized AgiBotWorld end-effector
 actions, while the Unitree environment expects 33 ordered joint commands. The
