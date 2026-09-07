@@ -240,6 +240,24 @@ def _runtime_environment(arguments: argparse.Namespace) -> dict[str, str]:
     """Build the child environment for every visible gate."""
 
     environment = os.environ.copy()
+    # The public repository uses a ``src`` layout, so launching this wrapper as
+    # ``python scripts/run_demo.py`` does not automatically expose its package
+    # directory to the child interpreter.  Prepend the absolute ``src`` path
+    # derived from this wrapper's checkout (a filesystem path, with no physical
+    # units or coordinate frame) so it wins over a stale editable install from
+    # another checkout while preserving every caller-supplied search path after
+    # it.  ``os.pathsep`` is used instead of a fixed colon for platform-correct
+    # path separation.  This is intentionally fixed by the repository's src
+    # layout: omitting or appending it can import incompatible code, while a
+    # wrong path fails at import time; changing the layout requires updating
+    # this derivation and rerunning the launcher tests.
+    repository_source = str((REPOSITORY_ROOT / "src").resolve())
+    existing_python_path = environment.get("PYTHONPATH")
+    environment["PYTHONPATH"] = (
+        repository_source
+        if not existing_python_path
+        else f"{repository_source}{os.pathsep}{existing_python_path}"
+    )
     # CYCLONEDDS_HOME is removed because the public Unitree DDS initializer
     # silently terminated on this host when pointed at the local install.
     environment.pop("CYCLONEDDS_HOME", None)

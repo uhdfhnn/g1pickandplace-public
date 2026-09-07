@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 from pathlib import Path
 
 import pytest
@@ -250,6 +251,24 @@ def test_missing_explicit_assimp_preload_fails_before_launch(tmp_path: Path) -> 
     )
     with pytest.raises(FileNotFoundError, match="Assimp preload does not exist"):
         wrapper._runtime_environment(arguments)
+
+
+def test_runtime_environment_prioritizes_current_checkout_source(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    wrapper = _load_wrapper()
+    arguments = wrapper._parser().parse_args(["--keyboard-teleop"])
+    prior_paths = os.pathsep.join(("/existing/first", "/existing/second"))
+    monkeypatch.setenv("PYTHONPATH", prior_paths)
+    monkeypatch.setattr(wrapper, "_assimp_preload", lambda _: None)
+
+    environment = wrapper._runtime_environment(arguments)
+
+    assert environment["PYTHONPATH"].split(os.pathsep) == [
+        str((wrapper.REPOSITORY_ROOT / "src").resolve()),
+        "/existing/first",
+        "/existing/second",
+    ]
 
 
 def test_shovel_instruction_uses_fixed_three_second_reset_settle() -> None:
