@@ -1,10 +1,11 @@
-# 从 Git clone 到运行
+# From Git Clone to Running the Demo
 
-这份说明复现通过验收的公开 Unitree G1 / Isaac Lab 环境。默认目录结构为：
+This guide reproduces the validated public Unitree G1 / Isaac Lab environment.
+The default directory layout is:
 
 ~~~text
 workspace/
-├── g1pickandplace/
+├── g1pickandplace-public/
 ├── unitree_sim_isaaclab/
 ├── unitree_ros/
 ├── unitree_sdk2_python/
@@ -12,111 +13,132 @@ workspace/
 └── cyclonedds/
 ~~~
 
-setup 脚本会创建后五个同级依赖目录。不要把私人项目或资产加入这些路径。
+The setup script creates the five sibling dependency directories listed after
+`g1pickandplace-public`. Do not place private projects or assets in those paths.
 
-## 1. 前置条件
+## 1. Prerequisites
 
-- Ubuntu 22.04 或更高版本；当前验收主机使用 Ubuntu/RTX 5090。
-- 符合 Isaac Sim 要求的 NVIDIA 驱动和 GPU。
-- Git、Conda，以及可使用 `sudo apt-get` 的账号。
-- 能访问 GitHub、NVIDIA Python index、PyTorch wheel index 和 Unitree 的
-  Hugging Face 资产仓库。
-- 足够的磁盘空间；Isaac Sim、Isaac Lab 和仿真资产远大于本仓库源码。
+- Ubuntu 22.04 or newer. The current validation host uses Ubuntu with an
+  RTX 5090 GPU.
+- An NVIDIA GPU and driver that meet the Isaac Sim requirements.
+- Git, Conda, and an account that can run `sudo apt-get`.
+- Network access to GitHub, the NVIDIA Python index, the PyTorch wheel index,
+  and Unitree's Hugging Face asset repository.
+- Sufficient disk space. Isaac Sim, Isaac Lab, and the simulation assets are
+  substantially larger than this source repository.
 
-脚本会调用 Unitree 官方 `auto_setup_env.sh`，因此会安装系统包、下载大体积
-资产，并可能要求接受 NVIDIA EULA 或生成本地证书。这些是首次安装动作，不适合
-在已有的生产 Conda 环境上覆盖运行。
+The script invokes Unitree's official `auto_setup_env.sh`. It therefore
+installs system packages, downloads large assets, and may ask you to accept the
+NVIDIA EULA or generate local certificates. These are first-time installation
+operations; do not run the script over an existing production Conda
+environment.
 
-## 2. clone 并安装
+## 2. Clone and Install
 
 ~~~bash
 mkdir -p workspace
 cd workspace
-git clone https://github.com/uhdfhnn/g1pickandplace.git
-cd g1pickandplace
+git clone https://github.com/uhdfhnn/g1pickandplace-public.git
+cd g1pickandplace-public
 bash scripts/setup_environment.sh
 ~~~
 
-默认创建 `unitree_sim_env`。如果机器上已经使用这个名字，请选择一个全新的环境名：
+The default Conda environment name is `unitree_sim_env`. If that name is
+already in use on your machine, select a new environment name:
 
 ~~~bash
 G1PICKPLACE_CONDA_ENV=g1_demo_env bash scripts/setup_environment.sh
 ~~~
 
-脚本遇到同名 Conda 环境或被修改的依赖仓库会停止，不会自动删除或覆盖用户环境。
+The script stops if it finds a Conda environment with the selected name or a
+modified dependency repository. It never deletes or overwrites those existing
+resources automatically.
 
-## 3. 已锁定的版本
+## 3. Pinned Versions
 
-| 依赖 | 已验证版本或 commit | 选择依据与变更风险 |
+| Dependency | Validated version or commit | Basis and upgrade risk |
 | --- | --- | --- |
-| Isaac Sim | 5.0.0 | Unitree 为 RTX 50 系列推荐的路径；4.5 可能缺少 GPU 支持，5.1 尚未通过本项目可见门控 |
-| Python | 3.11 | Unitree Isaac Sim 5.0 安装脚本的版本；其他版本可能没有兼容 wheel |
-| PyTorch | 2.7.0 | 与 Isaac Sim 5.0 / Isaac Lab v2.2.0 验证；CUDA 本地后缀可由 NVIDIA 解析为兼容构建 |
-| Isaac Lab | `46dff135f44683f031edf346e544fcfd8456b2bb` (`v2.2.0`) | 验收使用的任务和 API；升级可能改变场景、动作项或传感器 API |
-| `unitree_sim_isaaclab` | `e30c25b1dffdf92ada1d6c8c1fe9a47bdde0fecc` | 验收使用的公开场景、任务注册和资产布局 |
-| `unitree_ros` | `7d6075f7f58588b189b940130e3edab3c839b2df` | 提供已验证的 G1 29-DoF URDF/mesh |
-| `unitree_sdk2_python` | `65691c8a8bc53b98d3976dba4dbf9d5d20b2e7f5` | Unitree 官方安装所用 DDS Python 接口 |
-| CycloneDDS | `5041f3560c088c99e5088b2b8520b69169621196` | 与 SDK 验证的 0.10.x 构建；升级可能改变 DDS ABI/初始化 |
-| teleimager | `b81de448bca9c696d7ce145f4af71c66146d0b69` | `unitree_sim_isaaclab` 锁定的相机子模块 |
-| Pinocchio (`pin`) | 2.7.0 | 验收 IK 与 cmeel/HPP-FCL ABI；3.x 未在当前轨迹上验证 |
-| LeRobot | 0.4.4（dataset-only） | 验收数据集的原生 v3 写入、重开和视频验证 API；不安装无关的 policy/training 栈 |
+| Isaac Sim | 5.0.0 | Unitree's recommended path for RTX 50-series GPUs. Version 4.5 may lack the required GPU support; 5.1 has not passed this project's visible gates. |
+| Python | 3.11 | Version installed by Unitree's Isaac Sim 5.0 setup. Other versions may not have compatible wheels. |
+| PyTorch | 2.7.0 | Validated with Isaac Sim 5.0 and Isaac Lab v2.2.0. NVIDIA may resolve the local CUDA suffix to a compatible build. |
+| Isaac Lab | `46dff135f44683f031edf346e544fcfd8456b2bb` (`v2.2.0`) | Task and API version used for validation. An upgrade may change the scene, action terms, or sensor APIs. |
+| `unitree_sim_isaaclab` | `e30c25b1dffdf92ada1d6c8c1fe9a47bdde0fecc` | Public scene, task registration, and asset layout used for validation. |
+| `unitree_ros` | `7d6075f7f58588b189b940130e3edab3c839b2df` | Provides the validated G1 29-DoF URDF and meshes. |
+| `unitree_sdk2_python` | `65691c8a8bc53b98d3976dba4dbf9d5d20b2e7f5` | DDS Python interface used by Unitree's official installation. |
+| CycloneDDS | `5041f3560c088c99e5088b2b8520b69169621196` | Validated 0.10.x build for the SDK. An upgrade may change DDS ABI or initialization behavior. |
+| teleimager | `b81de448bca9c696d7ce145f4af71c66146d0b69` | Camera submodule pinned by `unitree_sim_isaaclab`. |
+| Pinocchio (`pin`) | 2.7.0 | Validated IK and cmeel/HPP-FCL ABI. Version 3.x has not been validated on the current trajectories. |
+| LeRobot | 0.4.4 (dataset-only) | Native v3 write, finalize, reopen, and video-validation API used by the dataset pipeline. Unrelated policy and training dependencies are not installed. |
 
-这些值是复现锁，而不是声称所有机器只能使用这些版本。修改任一项后，至少需要重新
-执行依赖检查、完整单元测试、可见 inspect、plan、rollout 和 LeRobot 重开验证。
+These pins are a reproducibility lock, not a claim that every machine must use
+only these versions. After changing any item, rerun the dependency check, full
+unit test suite, visible inspect and plan gates, physical rollout, and LeRobot
+reopen validation.
 
-## 4. 验证安装
+## 4. Verify the Installation
 
 ~~~bash
 conda activate unitree_sim_env
-cd workspace/g1pickandplace
+cd workspace/g1pickandplace-public
 python scripts/check_install.py
 python -m pytest -q
 python -m compileall -q src scripts tests
 git diff --check
 ~~~
 
-如果使用了自定义环境名，把第一行替换为对应名称。`check_install.py` 会检查核心模块、
-已验证的软件版本和默认同级 Unitree 仓库。
+If you selected a custom environment name, replace the first command with that
+name. `check_install.py` verifies the core modules, validated software
+versions, and default sibling Unitree repositories.
 
-LeRobot 采用 [`requirements-recording.txt`](requirements-recording.txt) 中的精确
-dataset-only 依赖，并使用 `--no-deps` 安装。原因是 LeRobot 的完整训练依赖解析会替换
-Isaac Sim 自带的兼容包；本项目只调用 `LeRobotDataset` 的写入、finalize、重开和视频
-验证接口。setup 最后会真实导入该类，缺少任何必要依赖都会让安装失败，而不会留下
-一个表面成功但不能录制的环境。此环境不承诺支持 LeRobot policy 训练。
+LeRobot uses the exact dataset-only dependencies in
+[`requirements-recording.txt`](requirements-recording.txt), installed with
+`--no-deps`. Resolving LeRobot's complete training dependency set would replace
+packages supplied by Isaac Sim; this project uses only the `LeRobotDataset`
+write, finalize, reopen, and video-validation interfaces. At the end of setup,
+the script imports that class for real. A missing dependency therefore fails
+installation instead of leaving an environment that appears successful but
+cannot record. This environment does not claim to support LeRobot policy
+training.
 
-## 5. Assimp / HPP-FCL 兼容处理
+## 5. Assimp / HPP-FCL Compatibility
 
-Pinocchio 2.7.0 的 cmeel 依赖在验收主机上需要先加载
-`cmeel.prefix/lib/libassimp.so.5`，否则可能在启动时出现 HPP-FCL 符号错误。
-`scripts/run_demo.py` 会依次从以下位置查找：
+On the validation host, Pinocchio 2.7.0's cmeel dependencies require
+`cmeel.prefix/lib/libassimp.so.5` to be preloaded. Without it, HPP-FCL may
+report symbol errors during startup. `scripts/run_demo.py` searches these
+locations in order:
 
-1. `--assimp-preload` 显式路径；
-2. `G1PICKPLACE_ASSIMP_LIB` 环境变量；
-3. 当前 `CONDA_PREFIX`；
-4. Conda 安装目录下的 `envs/<环境名>`。
+1. The explicit `--assimp-preload` path.
+2. The `G1PICKPLACE_ASSIMP_LIB` environment variable.
+3. The active `CONDA_PREFIX`.
+4. `envs/<environment-name>` below the Conda installation directory.
 
-自动发现不到时不会猜测系统 ABI。若本机复现符号错误，可以显式指定：
+Automatic discovery does not guess a system ABI. If the symbol error occurs
+on your machine, provide the library explicitly:
 
 ~~~bash
 export G1PICKPLACE_ASSIMP_LIB="$CONDA_PREFIX/lib/python3.11/site-packages/cmeel.prefix/lib/libassimp.so.5"
 test -f "$G1PICKPLACE_ASSIMP_LIB"
 ~~~
 
-这里的 Python 3.11 路径来自上表锁定的环境。若修改 Python 或 cmeel 版本，应先找到
-实际库文件并重新验证，而不是复制这个路径。
+The Python 3.11 path follows the pinned environment above. If you change the
+Python or cmeel version, locate the actual library and revalidate it instead of
+copying this path unchanged.
 
-## 6. 运行安全门控
+## 6. Run the Safety Gates
 
-激活环境并从仓库根目录运行。默认只执行可见 inspect 和 plan，不执行物理 rollout：
+Activate the environment and run from the repository root. By default, the
+wrapper runs only visible inspect and plan; it does not execute a physical
+rollout:
 
 ~~~bash
 conda activate unitree_sim_env
-cd workspace/g1pickandplace
+cd workspace/g1pickandplace-public
 python scripts/run_demo.py \
   --instruction "Pick up the red block and stack it on the yellow block."
 ~~~
 
-inspect 和 plan 都通过后，才可以显式请求 rollout 和原生 LeRobot 录制：
+Request rollout and native LeRobot recording only after both inspect and plan
+pass:
 
 ~~~bash
 python scripts/run_demo.py \
@@ -124,12 +146,13 @@ python scripts/run_demo.py \
   --rollout
 ~~~
 
-更细的门控命令和验收标准见
-[`docs/RUN_ENTRANCE_TEST_DEMO.md`](docs/RUN_ENTRANCE_TEST_DEMO.md)。
+See [`docs/RUN_ENTRANCE_TEST_DEMO.md`](docs/RUN_ENTRANCE_TEST_DEMO.md) for the
+detailed gate commands and acceptance criteria.
 
-## 7. 生成证据不放入源码 Git
+## 7. Keep Generated Evidence Out of Source Git
 
-`outputs/`、`datasets/`、`videos/` 和 `deliverables/` 是生成产物并已被忽略。
-其中现有 evaluator archive 超过 GitHub 普通单文件限制。需要分发时，应核对 manifest
-和 SHA-256 后使用 GitHub Release asset、对象存储或显式配置 Git LFS；不要把它们混入
-普通源码 commit。
+`outputs/`, `datasets/`, `videos/`, and `deliverables/` contain generated
+artifacts and are ignored. The existing evaluator archive exceeds GitHub's
+normal per-file limit. To distribute it, verify the manifest and SHA-256 first,
+then use a GitHub Release asset, object storage, or explicitly configured Git
+LFS. Do not mix generated evidence into ordinary source commits.
